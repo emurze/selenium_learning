@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    command: > 
+      sh -c 'cd src &&
+             poetry run python3 main.py'
+    tty: true
+    stdin_open: true
+    networks:
+      - backend
+    restart: unless-stopped
+#
+#  redis:
+#    image: 'redis:7'
+#    container_name: 'redis'
+#    networks:
+#      - backend
+#    volumes:
+#      - redis_data:/data
+#    restart: unless-stopped
+
+networks:
+  backend:
+
+volumes:
+  redis_data:
