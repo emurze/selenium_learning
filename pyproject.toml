@@ -8,6 +8,14 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 selenium = "4.6"
+webdriver-manager = "^4.0.1"
+uvicorn = {extras = ["standard"], version = "^0.23.2"}
+django = ">=4.2.6,<4.3.0"
+pillow = ">=10.0.1,<10.1.0"
+psycopg2-binary = ">=2.9.9,<2.10.0"
+gunicorn = ">=21.2.0,<21.3.0"
+redis = "^5.0.1"
+celery = "^5.3.4"
 
 
 [build-system]

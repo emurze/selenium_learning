@@ -1,0 +1,165 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		  content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Panel</title>
+	<style>
+		input,button,textarea{font-family:inherit;}
+		input::-ms-clear{display: none;}
+		button{cursor: pointer;}
+		button::-moz-focus-inner {padding:0;border:0;}
+		a, a:visited, a:hover, a:active {
+			color: inherit;
+			text-decoration: none;
+		}
+	</style>
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body style="background-color: black; color: white; font-family: sans-serif, Arial; font-size: 15px; padding-bottom: 20px;">
+	<div style="display: grid; grid-template-columns: 290px 1fr; width: 100%;">
+		<div>
+			<form method="POST">
+				{% csrf_token %}
+				{{ form.as_p }}
+				<button type="submit">add email</button>
+			</form>
+			<table>
+				<tr>
+					<th>email</th>
+				</tr>
+				{% for email in emails %}
+					<tr>
+						<td>{{ email }}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		</div>
+		<div style="max-width: 1460px; margin: 0 auto; padding-right: 16px;">
+			<div style="display: flex; margin: 5px 0 3px 0;">
+				<form method="POST" style="margin-right: 10px;">
+					{% csrf_token %}
+					<input type="hidden" name="parse" value="true" />
+					<button type="submit" class="state"
+							style="padding: 10px; cursor: pointer;
+							       border-radius: 20px; margin: 0;">
+						{{ state }}
+					</button>
+				</form>
+				<div class="state_gif"
+					 style="{% if state == 'parse' %}display: none;{% else %}display: inline-flex;{% endif %}
+					 		width: 30px; height: 36px;
+							justify-content: center; align-items: center;">
+					<img style="width: 30px; height: 30px;"
+						 src="{% static 'images/loading.gif' %}" alt="">
+				</div>
+			</div>
+			<div style="display: grid; grid-template-columns: repeat(5, 1fr)" class="article_container">
+				{% for article in articles %}
+					<article style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
+						<div style="border-radius: 10px; overflow: hidden; max-height: 425px;">
+							<a href="{{ article.href }}">
+								<img style="object-fit: cover;
+											width: 283px; height: 425px;"
+									 src="{{ article.src }}" alt="">
+							</a>
+						</div>
+					</article>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+	<script>
+		const article_container = document.querySelector('.article_container')
+		const state_gif = document.querySelector('.state_gif')
+		const state_box = document.querySelector('.state')
+		setInterval(
+            () => {
+                async function _() {
+                 	const response = await axios.get(`{% url 'state' %}`)
+					const state = response.data.state
+
+					state_box.innerHTML = state
+					if (state === 'parse') {
+                        state_gif.style.display = 'none'
+                    } else {
+                        state_gif.style.display = 'inline-flex'
+                    }
+				}_()
+			},
+			500,
+		)
+	</script>
+	<script defer>
+		function infinityPaginationHandler() {
+			const extraMargin = 1
+
+			let emptyPage = false
+			let page = 1
+			let elem = document.querySelector('[hx-trigger="revealed"]')
+			let isCreated = false
+			let blockRequest = false
+
+			setInterval(() => {
+				if (!blockRequest && !emptyPage) {
+					const offset = elem => elem.getBoundingClientRect().top
+
+					if (!isCreated) {
+						isCreated = true
+						setTimeout(() => {
+							isCreated = false
+							elem = document.querySelector('[hx-trigger="revealed"]')
+						}, 100)
+					}
+					const clientHeight = document.documentElement.clientHeight
+					const last_post = elem ? offset(elem) : clientHeight+1
+					const margin = last_post - extraMargin
+
+					if (clientHeight > margin) {
+						article_container.insertAdjacentHTML(
+							'beforeend',
+							`{% include 'loading_icon.html' %}`
+						)
+
+						elem && elem.removeAttribute('hx-trigger')
+						blockRequest = true
+
+						page++
+
+						const url = `{% url 'download_articles' %}`
+						const full_url = `${url}?page=${page}`
+
+						async function _() {
+							const timer = new Promise(resolve => setTimeout(resolve, 200))
+							const response = (await Promise.all([timer, axios.get(full_url)]))[1]
+
+							const html = response.data
+
+							if (html === '') emptyPage = true
+							else {
+                                const users_batch = document.createElement('div')
+								users_batch.innerHTML = response.data
+
+								const elements = Array.from(users_batch.children)
+								elements.forEach(
+									elem => {
+										article_container.insertAdjacentElement('beforeend', elem)
+									}
+								)
+                            }
+
+							const loading_icon = document.querySelector('.loading_icon')
+							loading_icon && loading_icon.remove()
+							blockRequest = false
+						}_()
+					}
+				}
+			}, 5)
+		}
+		window.addEventListener('DOMContentLoaded', infinityPaginationHandler)
+    </script>
+</body>
+</html>

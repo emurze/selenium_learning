@@ -1,27 +1,86 @@
 version: '3.8'
 services:
-  web:
+  db:
+    image: 'postgres:13'
+    container_name: 'db'
+    networks:
+      - backend
+    env_file: ./env/.db.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: 'redis:7'
+    container_name: 'redis'
+    networks:
+      - backend
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  panel:
     build: .
+    image: 'panel:1'
+    container_name: 'panel'
     command: > 
       sh -c 'cd src &&
-             poetry run python3 main.py'
+             poetry run python3 manage.py migrate --no-input &&
+             poetry run python3 manage.py runserver 0.0.0.0:8080'
+    ports:
+      - '8080:8080'
     tty: true
     stdin_open: true
     networks:
       - backend
+    env_file: ./env/.panel.env
+    volumes:
+      - ./src:/service/src
+      - app_static:/service/src/static
+      - app_media:/service/src/media
     restart: unless-stopped
-#
-#  redis:
-#    image: 'redis:7'
-#    container_name: 'redis'
-#    networks:
-#      - backend
-#    volumes:
-#      - redis_data:/data
-#    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+
+  message_broker:
+    image: rabbitmq:3.9.29-management-alpine
+    container_name: 'rabbitmq'
+    networks:
+      - backend
+    ports:
+      - '15672:15672'
+    volumes:
+      - message_broker_data:/var/lib/rabbitmq
+    env_file:
+      - ./env/.rabbitmq.env
+    restart: unless-stopped
+
+  worker1:
+    build: .
+    container_name: 'worker1'
+    command: >
+      sh -c "cd src && 
+             poetry run celery -A celery_app.app worker --loglevel=info"
+    networks:
+      - backend
+    volumes:
+      - ./src:/service/src
+      - app_static:/service/src/static
+      - app_media:/service/src/media
+    env_file:
+      - ./env/.panel.env
+    restart: unless-stopped
+    depends_on:
+      - message_broker
+      - panel
 
 networks:
   backend:
 
 volumes:
+  message_broker_data:
+  postgres_data:
   redis_data:
+  app_static:
+  app_media:
