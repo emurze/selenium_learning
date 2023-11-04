@@ -1,0 +1,9 @@
+<script defer>
+	const infinity_pagination_obj = {
+		loading_icon: `{% include 'loading_icon.html' %}`,
+		url_download_articles: `{% url 'my_download_articles' %}`,
+		pages: Math.round(`{{ women_amount }}` / `{{ paginate_by }}`),
+		isNotNeed: `{{ women_amount }}` / `{{ paginate_by }}` <= 1
+	}
+</script>
+{% include 'js/base_infinity_pagination.html' %}

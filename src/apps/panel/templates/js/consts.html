@@ -1,0 +1,14 @@
+<script>
+	const create_form = document.querySelector('.create_form')
+	const mega_form = document.querySelector('.mega_form')
+	const send_email = document.querySelector('.send_email')
+
+	const article_container = document.querySelector('.article_container')
+	const state_gif = document.querySelector('.state_gif')
+	const state_box = document.querySelector('.state')
+
+	const csrf_token_input = document.querySelector("input[name='csrfmiddlewaretoken']")
+	const csrf_token = csrf_token_input ? csrf_token_input.value : null
+
+	let current_email
+</script>

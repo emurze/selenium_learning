@@ -1,0 +1,7 @@
+{% for woman in women %}
+	<article class="article" style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
+		<div class="article__container" style="border-radius: 10px;">
+			<img src="{{ woman.photo.url }}" alt="">
+		</div>
+	</article>
+{% endfor %}

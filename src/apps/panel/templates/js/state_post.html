@@ -1,0 +1,15 @@
+<script defer>
+	const panel_obj = {
+		url_panel: `{% url 'panel' %}`,
+	}
+	function state_post() {
+		const form = new FormData();
+		form.append('parse', true);
+		const headers = {
+			'X-CSRFToken': csrf_token,
+			'Content-Type': `multipart/form-data;
+			 boundary=${form._boundary}`,
+		}
+		axios.post(panel_obj.url_panel, form, {headers})
+	}
+</script>

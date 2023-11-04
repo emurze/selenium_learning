@@ -1,6 +1,7 @@
 import logging
 
 from django.core.handlers.wsgi import WSGIRequest
+from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy, reverse
@@ -10,8 +11,9 @@ from django.views.generic import TemplateView, ListView
 
 from apps.panel.email_storage import EmailRedisRepository
 from apps.panel.mixins import EmailCreateListMixin, ArticleParseListMixin, \
-    PanelCommonMixin, PanelStateMixin, AddWomanFormMixin
-from apps.panel.models import Article
+    PanelCommonMixin, PanelStateMixin, AddWomanFormMixin, BasePanelMixin, \
+    MyPanelListMixin, AddWomanFileSystemFormMixin, CreateWomanMixin
+from apps.panel.models import Article, Woman
 from apps.panel.tasks import TaskSingletonRedisRepository
 from apps.parser.features.get_elemens import StateStorageRepository
 
@@ -19,22 +21,46 @@ lg = logging.getLogger(__name__)
 
 
 class PanelView(
-    EmailCreateListMixin,
     ArticleParseListMixin,
     PanelStateMixin,
-    PanelCommonMixin,
-    AddWomanFormMixin,
-    TemplateView,
+    BasePanelMixin,
 ):
-    template_name = 'panel.html'
+    paginate_by = 30
     success_url = reverse_lazy('panel')
+    template_name = 'pages/panel.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs['paginate_by'] = self.paginate_by
+        return super().get_context_data(**kwargs)
 
 
 class DownloadArticleList(ListView):
-    queryset = Article.objects.only('src', 'href')
-    paginate_by = 35
+    queryset = Article.objects.all()
+    paginate_by = 30
     template_name = 'articles.html'
     context_object_name = 'articles'
+
+
+class DownloadMyArticleList(ListView):
+    queryset = Woman.objects.all()
+    paginate_by = 30
+    template_name = 'women.html'
+    context_object_name = 'women'
+
+
+class MyPanelView(
+    CreateWomanMixin,
+    AddWomanFileSystemFormMixin,
+    MyPanelListMixin,
+    BasePanelMixin,
+):
+    paginate_by = 30
+    success_url = reverse_lazy('my_panel')
+    template_name = 'pages/my_panel.html'
+
+    def get_context_data(self, **kwargs):
+        kwargs['paginate_by'] = self.paginate_by
+        return super().get_context_data(**kwargs)
 
 
 @csrf_exempt
@@ -45,7 +71,6 @@ def clear_emails(request: WSGIRequest) -> HttpResponse:
     return HttpResponse()
 
 
-@csrf_exempt
 @require_GET
 def get_state(request: WSGIRequest) -> JsonResponse:
     singleton = TaskSingletonRedisRepository()
@@ -61,5 +86,6 @@ def get_state(request: WSGIRequest) -> JsonResponse:
 
 @csrf_exempt
 @require_POST
-def make_photo():
-    pass
+def make_photo(request: WSGIRequest) -> HttpResponse:
+    lg.debug(request.POST)
+    return redirect(reverse_lazy('panel'))

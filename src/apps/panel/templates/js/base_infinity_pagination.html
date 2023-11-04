@@ -1,0 +1,71 @@
+<script defer>
+	function infinityPaginationHandler() {
+		const extraMargin = 1
+
+		let emptyPage = false
+		let page = 1
+		let elem = document.querySelector('[hx-trigger="revealed"]')
+		let isCreated = false
+		let blockRequest = false
+		let isNeed = !infinity_pagination_obj.isNotNeed
+
+		setInterval(() => {
+            let isLimit = page > infinity_pagination_obj.pages
+			if (!blockRequest && !emptyPage && !isLimit && isNeed) {
+				const offset = elem => elem.getBoundingClientRect().top
+
+				if (!isCreated) {
+					isCreated = true
+					setTimeout(() => {
+						isCreated = false
+						elem = document.querySelector('[hx-trigger="revealed"]')
+					}, 100)
+				}
+				const clientHeight = document.documentElement.clientHeight
+				const last_post = elem ? offset(elem) : clientHeight+1
+				const margin = last_post - extraMargin
+
+				if (clientHeight > margin) {
+					article_container.insertAdjacentHTML(
+						'beforeend',
+						infinity_pagination_obj.loading_icon
+					)
+
+					elem && elem.removeAttribute('hx-trigger')
+					blockRequest = true
+
+					page++
+
+					const url = infinity_pagination_obj.url_download_articles
+					const full_url = `${url}?page=${page}`
+
+					async function _() {
+						const timer = new Promise(resolve => setTimeout(resolve, 200))
+
+						const response = (await Promise.all([timer, axios.get(full_url)]))[1]
+						const html = response.data
+
+						if (html === '') {
+							emptyPage = true
+						} else {
+							const users_batch = document.createElement('div')
+							users_batch.innerHTML = html
+
+							const elements = Array.from(users_batch.children)
+							elements.forEach(
+								elem => {
+									article_container.insertAdjacentElement('beforeend', elem)
+								}
+							)
+						}
+
+						const loading_icon = document.querySelector('.loading_icon')
+						loading_icon && loading_icon.remove()
+						blockRequest = false
+					}_()
+				}
+			}
+		}, 5)
+	}
+	window.addEventListener('DOMContentLoaded', infinityPaginationHandler)
+</script>

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+	<div class="info" style="display: flex; justify-content: right; margin: 5px 0 3px 0; position: relative;">
+		<div class="state_gif"
+			 style="{% if state == 'parse' %}display: none;{% else %}display: inline-flex;{% endif %}
+					width: 30px; height: 38px;
+					justify-content: center; align-items: center;">
+			<img style="width: 30px; height: 30px;"
+				 src="{% static 'images/loading.gif' %}" alt="">
+		</div>
+
+		<button class="state button" onclick="state_post(this)">
+				{{ state }}
+		</button>
+		<div style="display: flex; align-items: center; font-weight: bold; font-size: 15px;">{{ articles_amount }}</div>
+	</div>
+	<div style="display: grid;" class="article_container">
+		{% for article in articles %}
+			<article class="article" style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
+				<div class="article__container" style="border-radius: 10px;">
+					<a href="{{ article.href }}">
+						<img src="{{ article.src }}" alt="">
+					</a>
+				</div>
+			</article>
+		{% endfor %}
+	</div>
+{% endblock %}
+
+{% block script %}
+	{% include 'js/state_post.html' %}
+	{% include 'js/event_loop.html' %}
+	{% include 'js/infinity_pagination.html' %}
+{% endblock %}

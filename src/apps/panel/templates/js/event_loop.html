@@ -1,0 +1,28 @@
+{% load static %}
+<script>
+	const event_loop_obj = {
+		url_state: `{% url 'state' %}`,
+	}
+	let state_interval;
+	setInterval(
+		() => {
+			let last_state;
+			async function _() {
+				const response = await axios.get(event_loop_obj.url_state)
+				const state = response.data.state
+
+				state_box.innerHTML = state
+				if (state === 'parse') {
+					state_gif.style.display = 'none'
+					if (last_state === 'pending') {
+						location.reload()
+					}
+				} else {
+					state_gif.style.display = 'inline-flex'
+				}
+				last_state = state
+			}_()
+		},
+		500,
+	)
+</script>

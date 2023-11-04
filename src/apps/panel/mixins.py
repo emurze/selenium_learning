@@ -4,11 +4,13 @@ from django.conf import settings
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, TemplateView
 
 from apps.panel.email_storage import EmailRedisRepository
-from apps.panel.forms import CreateEmailForm, CreateWomanForm
-from apps.panel.models import Article
+from apps.panel.forms import CreateEmailForm, CreateWomanForm, \
+    CreateWomanFileSystemForm
+from apps.panel.models import Article, Woman
 from utils import mixin_for
 from .tasks import request_articles, TaskSingletonRedisRepository
 from ..parser.features.get_elemens import StateStorageRepository
@@ -39,8 +41,7 @@ class ArticleParseListMixin(mixin_for(CreateView)):
         return super().post(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs) -> dict:
-        kwargs['articles'] = Article.objects.only('src', 'href')\
-            [:35]
+        kwargs['articles'] = Article.objects.all()[:30]
         kwargs['articles_amount'] = Article.objects.count()
         return super().get_context_data(**kwargs)
 
@@ -65,3 +66,34 @@ class AddWomanFormMixin:
     def get_context_data(self, **kwargs) -> dict:
         kwargs['woman_form'] = CreateWomanForm()
         return super().get_context_data(**kwargs)
+
+
+class BasePanelMixin(
+    EmailCreateListMixin,
+    AddWomanFormMixin,
+    PanelCommonMixin,
+    TemplateView,
+):
+    pass
+
+
+class MyPanelListMixin:
+    def get_context_data(self, **kwargs) -> dict:
+        kwargs['women'] = Woman.objects.all()[:30]
+        kwargs['women_amount'] = Woman.objects.count()
+        return super().get_context_data(**kwargs)
+
+
+class AddWomanFileSystemFormMixin:
+    def get_context_data(self, **kwargs) -> dict:
+        kwargs['woman_file_form'] = CreateWomanFileSystemForm()
+        return super().get_context_data(**kwargs)
+
+
+class CreateWomanMixin(mixin_for(CreateView)):
+    def post(self, request: WSGIRequest, *args, **kwargs) -> HttpResponse:
+        if (
+            form := CreateWomanFileSystemForm(request.POST, request.FILES)
+        ).is_valid():
+            form.save()
+        return super().post(request, *args, **kwargs)
