@@ -29,7 +29,6 @@ class StateStorageRepository:
             return state.decode('utf-8')
 
     def save_state(self, state: str) -> None:
-        print(state)
         self.conn.set('PARSE_STATE', state)
 
     def clear_state(self) -> None:
@@ -49,15 +48,11 @@ class ElementsGetter(BaseFeature):
         )
         articles = [
             {
-                'name': elem.find_element(
-                    By.CSS_SELECTOR, '.gt-name .d-block'
-                ).text,
-
                 'href': elem.find_element(
                     By.CSS_SELECTOR, '.gf-box-link'
                 ).get_attribute('href'),
 
-                'image': elem.find_element(
+                'src': elem.find_element(
                     By.CSS_SELECTOR, '.gf-box-link img'
                 ).get_attribute('src'),
             }

@@ -1,10 +1,8 @@
 {% for article in articles %}
-	<article style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
-		<div style="border-radius: 10px; overflow: hidden; max-height: 425px;">
+	<article class="article" style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
+		<div class="article__container" style="border-radius: 10px;">
 			<a href="{{ article.href }}">
-				<img style="object-fit: cover;
-							width: 283px; height: 425px;"
-					 src="{{ article.src }}" alt="">
+				<img src="{{ article.src }}" alt="">
 			</a>
 		</div>
 	</article>

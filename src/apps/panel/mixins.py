@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.views.generic import CreateView
 
 from apps.panel.email_storage import EmailRedisRepository
-from apps.panel.forms import CreateEmailForm
+from apps.panel.forms import CreateEmailForm, CreateWomanForm
 from apps.panel.models import Article
 from utils import mixin_for
 from .tasks import request_articles, TaskSingletonRedisRepository
@@ -41,6 +41,7 @@ class ArticleParseListMixin(mixin_for(CreateView)):
     def get_context_data(self, **kwargs) -> dict:
         kwargs['articles'] = Article.objects.only('src', 'href')\
             [:35]
+        kwargs['articles_amount'] = Article.objects.count()
         return super().get_context_data(**kwargs)
 
 
@@ -57,4 +58,10 @@ class PanelStateMixin:
             kwargs['state'] = storage.get_state()
         else:
             kwargs['state'] = 'parse'
+        return super().get_context_data(**kwargs)
+
+
+class AddWomanFormMixin:
+    def get_context_data(self, **kwargs) -> dict:
+        kwargs['woman_form'] = CreateWomanForm()
         return super().get_context_data(**kwargs)

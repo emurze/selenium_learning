@@ -8,6 +8,15 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>Panel</title>
 	<style>
+		* {box-sizing: border-box;}
+		html,body{
+			height: 100%;
+			line-height: 1;
+			font-size: 14px;
+			-ms-text-size-adjust: 100%;
+			-moz-text-size-adjust: 100%;
+			-webkit-text-size-adjust: 100%;
+		}
 		input,button,textarea{font-family:inherit;}
 		input::-ms-clear{display: none;}
 		button{cursor: pointer;}
@@ -16,31 +25,115 @@
 			color: inherit;
 			text-decoration: none;
 		}
+		.article_container {grid-template-columns: repeat(5, 1fr)}
+		.article__container {
+			overflow: hidden;
+			max-height: 425px;
+		}
+		.all {
+			display: grid;
+			grid-template-columns: 290px 1fr;
+			width: 100%;
+		}
+		.all__articles {
+			max-width: 1460px;
+			margin: 0 auto;
+			padding-right: 16px;
+		}
+		.article__container img {
+			object-fit: cover;
+			width: 283px;
+			height: 425px;
+		}
+		.info {left: 10px;}
+		.emails_gg {margin-left: 20px;}
+
+		@media (max-width: 1600px) {
+			.article_container {
+				grid-template-columns: repeat(4, 1fr);
+			}
+			.info {left: -13px;}
+        }
+		@media (max-width: 1500px) {
+			.article_container {
+				grid-template-columns: repeat(4,  1fr);
+			}
+			.article__container {
+				max-height: 100%;
+			}
+			.emails_gg {
+				margin-top: 28px;
+			}
+			.article__container img {
+				width: 100%;
+				height: 100%;
+			}
+			.all {display: block;}
+			.all__articles {
+				padding: 0;
+			}
+        }
+		@media (max-width: 1210px) {
+			.article_container {
+				grid-template-columns: repeat(3, 1fr);
+			}
+        }
+		@media (max-width: 910px) {
+			.article_container {
+				grid-template-columns: repeat(2, 1fr);
+			}
+        }
+		@media (max-width: 590px) {
+			.article_container {
+				grid-template-columns: repeat(1, 1fr);
+			}
+        }
 	</style>
 	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body style="background-color: black; color: white; font-family: sans-serif, Arial; font-size: 15px; padding-bottom: 20px;">
-	<div style="display: grid; grid-template-columns: 290px 1fr; width: 100%;">
-		<div>
+	<div class="mega_form" style="display: none;">
+		<div style="position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 1; background-color: rgba(0, 0, 0, 0.3);"></div>
+		<div style="position: fixed; left: calc(50% - 400px); top: calc(50% - 400px); z-index: 2;
+					width: 800px; height: 800px; background-color: #232323; border-radius: 15px; padding: 30px 50px;">
+			<h1>Hi</h1>
+			<form action="">
+				{{ woman_form.url }}
+			</form>
+		</div>
+	</div>
+	<div class="all">
+		<div class="emails_gg">
+			<h1>NoFap</h1>
 			<form method="POST">
 				{% csrf_token %}
-				{{ form.as_p }}
-				<button type="submit">add email</button>
+				<p>{{ form.email }}</p>
+				<p>
+					<button style="padding: 5px 7px; border-radius: 15px; margin-right: 4px;"
+						   type="submit">add email</button>
+					<button style="cursor: pointer; padding: 5px 7px; border-radius: 15px;"
+						 	onclick="axios.post(`{% url 'clear_emails' %}`); location.reload()">
+						clear
+					</button>
+				</p>
 			</form>
-			<table>
-				<tr>
-					<th>email</th>
-				</tr>
-				{% for email in emails %}
-					<tr>
-						<td>{{ email }}</td>
-					</tr>
-				{% endfor %}
-			</table>
+			{% for email in emails %}
+				<div>
+					{{ email }}
+					<button onclick="mega_form.style.display = 'block'">+</button>
+				</div>
+			{% endfor %}
 		</div>
-		<div style="max-width: 1460px; margin: 0 auto; padding-right: 16px;">
-			<div style="display: flex; margin: 5px 0 3px 0;">
-				<form method="POST" style="margin-right: 10px;">
+		<div class="all__articles" style="margin-top: 4px;">
+			<div class="info" style="display: flex; justify-content: right; margin: 5px 0 3px 0; position: relative;">
+				<div class="state_gif"
+					 style="{% if state == 'parse' %}display: none;{% else %}display: inline-flex;{% endif %}
+					 		width: 30px; height: 38px;
+							justify-content: center; align-items: center;">
+					<img style="width: 30px; height: 30px;"
+						 src="{% static 'images/loading.gif' %}" alt="">
+				</div>
+				<form method="POST" style="margin: 0 10px;">
 					{% csrf_token %}
 					<input type="hidden" name="parse" value="true" />
 					<button type="submit" class="state"
@@ -49,22 +142,14 @@
 						{{ state }}
 					</button>
 				</form>
-				<div class="state_gif"
-					 style="{% if state == 'parse' %}display: none;{% else %}display: inline-flex;{% endif %}
-					 		width: 30px; height: 36px;
-							justify-content: center; align-items: center;">
-					<img style="width: 30px; height: 30px;"
-						 src="{% static 'images/loading.gif' %}" alt="">
-				</div>
+				<div style="display: flex; align-items: center; font-weight: bold;">{{ articles_amount }}</div>
 			</div>
-			<div style="display: grid; grid-template-columns: repeat(5, 1fr)" class="article_container">
+			<div style="display: grid;" class="article_container">
 				{% for article in articles %}
-					<article style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
-						<div style="border-radius: 10px; overflow: hidden; max-height: 425px;">
+					<article class="article" style="padding: 7px;" {% if forloop.last %} hx-trigger="revealed" {% endif %}>
+						<div class="article__container" style="border-radius: 10px;">
 							<a href="{{ article.href }}">
-								<img style="object-fit: cover;
-											width: 283px; height: 425px;"
-									 src="{{ article.src }}" alt="">
+								<img src="{{ article.src }}" alt="">
 							</a>
 						</div>
 					</article>
@@ -72,6 +157,9 @@
 			</div>
 		</div>
 	</div>
+	<script>
+		const mega_form = document.querySelector('.mega_form')
+	</script>
 	<script>
 		const article_container = document.querySelector('.article_container')
 		const state_gif = document.querySelector('.state_gif')
@@ -138,8 +226,11 @@
 
 							const html = response.data
 
-							if (html === '') emptyPage = true
-							else {
+							if (html === '') {
+                                emptyPage = true
+								const loading_icon = document.querySelector('.loading_icon')
+								loading_icon && loading_icon.remove()
+                            } else {
                                 const users_batch = document.createElement('div')
 								users_batch.innerHTML = response.data
 

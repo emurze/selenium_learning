@@ -29,3 +29,6 @@ class EmailRedisRepository:
             email.decode('utf-8')
             for email in self.conn.smembers(REDIS_EMAIL_STORAGE)
         )
+
+    def clear_emails(self) -> None:
+        self.conn.delete(REDIS_EMAIL_STORAGE)

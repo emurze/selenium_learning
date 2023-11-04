@@ -1,14 +1,16 @@
 import logging
 
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import JsonResponse
-from django.urls import reverse_lazy
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, ListView
 
+from apps.panel.email_storage import EmailRedisRepository
 from apps.panel.mixins import EmailCreateListMixin, ArticleParseListMixin, \
-    PanelCommonMixin, PanelStateMixin
+    PanelCommonMixin, PanelStateMixin, AddWomanFormMixin
 from apps.panel.models import Article
 from apps.panel.tasks import TaskSingletonRedisRepository
 from apps.parser.features.get_elemens import StateStorageRepository
@@ -21,6 +23,7 @@ class PanelView(
     ArticleParseListMixin,
     PanelStateMixin,
     PanelCommonMixin,
+    AddWomanFormMixin,
     TemplateView,
 ):
     template_name = 'panel.html'
@@ -35,6 +38,14 @@ class DownloadArticleList(ListView):
 
 
 @csrf_exempt
+@require_POST
+def clear_emails(request: WSGIRequest) -> HttpResponse:
+    email_storage = EmailRedisRepository()
+    email_storage.clear_emails()
+    return HttpResponse()
+
+
+@csrf_exempt
 @require_GET
 def get_state(request: WSGIRequest) -> JsonResponse:
     singleton = TaskSingletonRedisRepository()
@@ -46,3 +57,9 @@ def get_state(request: WSGIRequest) -> JsonResponse:
     return JsonResponse({
         'state': state
     })
+
+
+@csrf_exempt
+@require_POST
+def make_photo():
+    pass

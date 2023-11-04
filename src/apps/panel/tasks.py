@@ -47,11 +47,12 @@ def request_articles() -> None:
         for item in result['articles']:
             try:
                 Article.objects.create(
-                    title=item['name'],
                     href=item['href'],
-                    src=item['image'],
+                    src=item['src'],
                 )
             except django.db.utils.IntegrityError:
                 pass
 
         singleton.remove_task('request_articles')
+        storage = StateStorageRepository()
+        storage.clear_state()
